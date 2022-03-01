@@ -81,6 +81,8 @@ _color_dealloc(pgColorObject *);
 static PyObject *
 _color_repr(pgColorObject *);
 static PyObject *
+_color_iter(pgColorObject *);
+static PyObject *
 _color_normalize(pgColorObject *, PyObject *);
 static PyObject *
 _color_correct_gamma(pgColorObject *, PyObject *);
@@ -305,24 +307,24 @@ static PyTypeObject pgColor_Type = {
     NULL,                                          /* tp_setattro */
     &_color_as_buffer,                             /* tp_as_buffer */
     COLOR_TPFLAGS,
-    DOC_PYGAMECOLOR,       /* tp_doc */
-    NULL,                  /* tp_traverse */
-    NULL,                  /* tp_clear */
-    _color_richcompare,    /* tp_richcompare */
-    0,                     /* tp_weaklistoffset */
-    NULL,                  /* tp_iter */
-    NULL,                  /* tp_iternext */
-    _color_methods,        /* tp_methods */
-    NULL,                  /* tp_members */
-    _color_getsets,        /* tp_getset */
-    NULL,                  /* tp_base */
-    NULL,                  /* tp_dict */
-    NULL,                  /* tp_descr_get */
-    NULL,                  /* tp_descr_set */
-    0,                     /* tp_dictoffset */
-    (initproc)_color_init, /* tp_init */
-    NULL,                  /* tp_alloc */
-    _color_new,            /* tp_new */
+    DOC_PYGAMECOLOR,          /* tp_doc */
+    NULL,                     /* tp_traverse */
+    NULL,                     /* tp_clear */
+    _color_richcompare,       /* tp_richcompare */
+    0,                        /* tp_weaklistoffset */
+    (getiterfunc)_color_iter, /* tp_iter */
+    NULL,                     /* tp_iternext */
+    _color_methods,           /* tp_methods */
+    NULL,                     /* tp_members */
+    _color_getsets,           /* tp_getset */
+    NULL,                     /* tp_base */
+    NULL,                     /* tp_dict */
+    NULL,                     /* tp_descr_get */
+    NULL,                     /* tp_descr_set */
+    0,                        /* tp_dictoffset */
+    (initproc)_color_init,    /* tp_init */
+    NULL,                     /* tp_alloc */
+    _color_new,               /* tp_new */
 #ifndef __SYMBIAN32__
     NULL, /* tp_free */
     NULL, /* tp_is_gc */
@@ -770,6 +772,28 @@ _color_repr(pgColorObject *color)
     PyOS_snprintf(buf, sizeof(buf), "(%d, %d, %d, %d)", color->data[0],
                   color->data[1], color->data[2], color->data[3]);
     return PyUnicode_FromString(buf);
+}
+
+static PyObject *
+_color_iter(pgColorObject *self)
+{
+    Uint8 i;
+    PyObject *iter, *tup = PyTuple_New(self->len);
+    if (!tup) {
+        return NULL;
+    }
+    for (i = 0; i < self->len; i++) {
+        PyObject *val = PyLong_FromLong(self->data[i]);
+        if (!val) {
+            Py_DECREF(tup);
+            return NULL;
+        }
+
+        PyTuple_SET_ITEM(tup, i, val);
+    }
+    iter = PyTuple_Type.tp_iter(tup);
+    Py_DECREF(tup);
+    return iter;
 }
 
 /**

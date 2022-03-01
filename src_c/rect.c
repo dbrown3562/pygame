@@ -1464,6 +1464,29 @@ Unimplemented:
     return Py_NotImplemented;
 }
 
+static PyObject *
+pg_rect_iterator(pgRectObject *self)
+{
+    Py_ssize_t i;
+    int *data = (int *)&self->r;
+    PyObject *iter, *tup = PyTuple_New(4);
+    if (!tup) {
+        return NULL;
+    }
+    for (i = 0; i < 4; i++) {
+        PyObject *val = PyLong_FromLong(data[i]);
+        if (!val) {
+            Py_DECREF(tup);
+            return NULL;
+        }
+
+        PyTuple_SET_ITEM(tup, i, val);
+    }
+    iter = PyTuple_Type.tp_iter(tup);
+    Py_DECREF(tup);
+    return iter;
+}
+
 /*width*/
 static PyObject *
 pg_rect_getwidth(pgRectObject *self, void *closure)
@@ -2018,7 +2041,7 @@ static PyTypeObject pgRect_Type = {
     NULL,                                /* tp_clear */
     (richcmpfunc)pg_rect_richcompare,    /* tp_richcompare */
     offsetof(pgRectObject, weakreflist), /* tp_weaklistoffset */
-    NULL,                                /* tp_iter */
+    (getiterfunc)pg_rect_iterator,       /* tp_iter */
     NULL,                                /* tp_iternext */
     pg_rect_methods,                     /* tp_methods */
     NULL,                                /* tp_members */
