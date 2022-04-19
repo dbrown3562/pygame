@@ -65,6 +65,7 @@ def main():
             screen.blit(o.image, o.pos)
 
         pg.display.update()
+        pg.time.delay(100)
 
 
 if __name__ == "__main__":
